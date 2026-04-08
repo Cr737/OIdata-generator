@@ -39,9 +39,9 @@ class VectorGenoirator(BaseGenoirator):
     """
 
     def check_args(self, args):
-        assert hasattr(args, "n")
-        assert hasattr(args, "L")
-        assert hasattr(args, "R")
+        for arg in args:
+            if not isinstance(arg, OI_vector):
+                return False
         return True
 
     def parse_args(self) -> List:

@@ -36,9 +36,10 @@ class OI_vector(AbstractOIType):
         self._int = inte
 
     def input(self) -> None:
-        print("input range of the length of vector.")
+        print("input range of the length of vector:")
         self._n = OI_integer()
-        print("input range of the element of vector.")
+        self._n.input()
+        print("input range of the element of vector:")
         self._int = OI_integer()
         self._int.input()
 

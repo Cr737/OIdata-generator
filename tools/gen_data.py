@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from genoirator.base_genoirator import BaseGenoirator, VectorGenoirator
 from genoirator.utils.io_utils import register_io
@@ -33,6 +34,11 @@ def parse_args():
         help="suffix of output file, default set to .out",
     )
     arg_parser.add_argument(
+        "--skip_if_exist",
+        action="store_true",
+        help="if enable, skip the case already generated",
+    )
+    arg_parser.add_argument(
         "--std_path", type=str, required=True, help="standard executor path"
     )
     args = arg_parser.parse_args()
@@ -40,22 +46,41 @@ def parse_args():
 
 
 def gen_one_case(case_id, args):
+    print(f"Case #{case_id}:")
     input_suffix = args.input_suffix
     output_suffix = args.output_suffix
+    skip_if_exist = args.skip_if_exist
     save_dir = args.save_dir
     std = args.std_path
     io = register_io(
         save_dir=save_dir,
         case_id=case_id,
+        skip_if_exist=skip_if_exist,
         input_suffix=input_suffix,
         output_suffix=output_suffix,
     )
-    gen = BaseGenoirator(1, "/tmp/a.out")
-    data = gen.gen()
-    print(data)
-    io.input_writeln(data)
-    io.output_gen(std)
-    io.close()
+    if io is None:
+        print(f"Case #{case_id} already exists, skip.")
+        return
+    try:
+        gen = BaseGenoirator(2, std)
+        n, k = gen.gen()
+        print(n, k)
+        io.input_writeln(n, k)
+        gen = VectorGenoirator(1, std)
+        data = gen.gen()
+        for line in data:
+            line = [-1 if _ < 0 else _ for _ in line]
+            assert len(line) == n
+            io.input_writeln(line)
+        io.output_gen(std)
+        io.close()
+    except Exception as e:
+        print(f"generate data failed {e}")
+        if io.input_filename is not None:
+            os.remove(io.input_filename)
+        if io.output_filename is not None:
+            os.remove(io.output_filename)
 
 
 if __name__ == "__main__":
